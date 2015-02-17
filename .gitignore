@@ -1,0 +1,15 @@
+# Mac OS shenanigans
+*.DS_Store
+
+# secrets
+.env
+
+# packages
+node_modules
+
+# logs
+npm-debug.log
+
+# compiled assets
+public/css/
+public/js
