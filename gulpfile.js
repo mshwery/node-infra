@@ -1,20 +1,21 @@
-var gulp   = require('gulp'),
-    gutil  = require('gulp-util'),
+var gulp    = require('gulp'),
+    gutil   = require('gulp-util'),
     nodemon = require('gulp-nodemon'),
-    nib    = require('nib'),
-    stylus = require('gulp-stylus'),
-    uglify = require('gulp-uglify');
+    nib     = require('nib'),
+    rev     = require('gulp-rev'),
+    replace = require('gulp-replace'),
+    del     = require('del'),
+    stylus  = require('gulp-stylus'),
+    uglify  = require('gulp-uglify');
 
 var browserify = require('browserify'),
     watchify   = require('watchify'),
-    source     = require('vinyl-source-stream');
-
-// var sourcemaps = require('gulp-sourcemaps');
-// var buffer = require('vinyl-buffer');
-
-// var app = require('./app');
+    source     = require('vinyl-source-stream'),
+    sourcemaps = require('gulp-sourcemaps'),
+    buffer     = require('vinyl-buffer');
 
 var debug = process.env.NODE_ENV !== 'production';
+var staticDir = './public/';
 
 var browserifyBundler = browserify('./assets/js/app.js', { debug: debug });
 var watchifyBundler = watchify(browserifyBundler);
@@ -24,6 +25,8 @@ var watchifyBundler = watchify(browserifyBundler);
 
 function compileScripts(options) {
   var bundler = options.watch ? watchifyBundler : browserifyBundler;
+
+  del(staticDir + 'js');
 
   var bundle = function() {
     var stream = bundler.bundle();
@@ -35,23 +38,42 @@ function compileScripts(options) {
 
     return stream
       .pipe(source('app.js'))
-      // // optional, remove if you dont want sourcemaps
-      //   .pipe(buffer())
-      //   .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
-      //   .pipe(sourcemaps.write('./')) // writes .map file
-      // //
-      .pipe(gulp.dest('./public/js'));
+      .pipe(buffer())
+      .pipe(rev())
+      .pipe(gulp.dest(staticDir + 'js')) // output the rev'd files
+      .pipe(rev.manifest({ base: './public', merge: true }))
+      .pipe(gulp.dest(staticDir)); // output the manifest file
   };
 
   bundler.on('update', bundle);
 
-  return bundle();  
+  return bundle();
 }
 
+
+gulp.task('cachebust', ['compile-css', 'compile-js'], function() {
+  var manifest = require('./rev-manifest.json');
+  var stream = gulp.src('./views/**/*.ejs');
+
+  Object.keys(manifest)
+    .reduce(function(stream, key) {
+      // generate a regular expression with this key to grab everything
+      // in between the the file name and the extension
+      var reg = key.split('.').join('(.+)?\.');
+      return stream.pipe(replace(new RegExp(reg), manifest[key]));
+    }, stream)
+    .pipe(gulp.dest('./views'));
+});
+
 gulp.task('compile-css', function() {
+  del(staticDir + 'css');
+
   return gulp.src('./assets/css/app.styl')
     .pipe(stylus({ use: [nib()] }))
-    .pipe(gulp.dest('./public/css'));
+    .pipe(rev())
+    .pipe(gulp.dest(staticDir + 'css'))
+    .pipe(rev.manifest({ base: './public', merge: true }))
+    .pipe(gulp.dest(staticDir));
 });
 
 gulp.task('compile-js', function() {
@@ -66,9 +88,9 @@ gulp.task('watch-js', function() {
   compileScripts({ watch: true });
 });
 
-gulp.task('build', ['compile-css', 'compile-js']);
+gulp.task('build', ['cachebust']);
 
-gulp.task('watch', ['watch-css', 'watch-js']);
+gulp.task('watch', ['cachebust', 'watch-css', 'watch-js']);
 
 gulp.task('serve', ['watch'], function () {
   nodemon({ script: './bin/www', ext: 'ejs' })
