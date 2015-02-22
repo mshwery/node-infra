@@ -1,9 +1,6 @@
 # Mac OS shenanigans
 *.DS_Store
 
-# secrets
-.env
-
 # packages
 node_modules
 
@@ -13,3 +10,7 @@ npm-debug.log
 # compiled assets
 public/css/
 public/js
+
+# secrets
+.env
+config/secrets.json

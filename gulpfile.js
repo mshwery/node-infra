@@ -1,5 +1,6 @@
 var gulp    = require('gulp'),
     gutil   = require('gulp-util'),
+    fs      = require('fs'),
     nodemon = require('gulp-nodemon'),
     nib     = require('nib'),
     rev     = require('gulp-rev'),
@@ -26,9 +27,9 @@ var watchifyBundler = watchify(browserifyBundler);
 function compileScripts(options) {
   var bundler = options.watch ? watchifyBundler : browserifyBundler;
 
-  del(staticDir + 'js');
-
   var bundle = function() {
+    del(staticDir + 'js/*.js');
+
     var stream = bundler.bundle();
 
     if (debug) {
@@ -51,9 +52,11 @@ function compileScripts(options) {
 }
 
 
-gulp.task('cachebust', ['compile-css', 'compile-js'], function() {
-  var manifest = require('./rev-manifest.json');
+gulp.task('cachebust', function() {
   var stream = gulp.src('./views/**/*.ejs');
+  var manifest = fs.readFileSync('./rev-manifest.json', 'utf-8');
+  
+  manifest = JSON.parse(manifest);
 
   Object.keys(manifest)
     .reduce(function(stream, key) {
@@ -65,9 +68,11 @@ gulp.task('cachebust', ['compile-css', 'compile-js'], function() {
     .pipe(gulp.dest('./views'));
 });
 
-gulp.task('compile-css', function() {
-  del(staticDir + 'css');
+gulp.task('clean-css', function() {
+  del(staticDir + 'css/*.css');
+});
 
+gulp.task('compile-css', ['clean-css'], function() {
   return gulp.src('./assets/css/app.styl')
     .pipe(stylus({ use: [nib()] }))
     .pipe(rev())
@@ -88,12 +93,16 @@ gulp.task('watch-js', function() {
   compileScripts({ watch: true });
 });
 
+gulp.task('watch-cache-manifest', function() {
+  gulp.watch('./rev-manifest.json', ['cachebust']);
+});
+
 gulp.task('build', ['cachebust']);
 
-gulp.task('watch', ['cachebust', 'watch-css', 'watch-js']);
+gulp.task('watch', ['watch-cache-manifest', 'watch-css', 'watch-js']);
 
 gulp.task('serve', ['watch'], function () {
-  nodemon({ script: './bin/www', ext: 'ejs' })
+  nodemon({ script: './bin/www' })
     .on('restart', function () {
       console.log('restarted!')
     });

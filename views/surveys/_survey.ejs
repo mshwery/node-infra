@@ -1,0 +1,13 @@
+<h2 class="survey-name"><%= survey.SurveyName %></h2>
+<span class="survey-completion">
+  <% if (survey.QuotaCalculationTypeID == 1) { %>
+    <span class="survey-section-label">Completes</span>
+  <% } else { %> 
+    <span class="survey-section-label">Screens</span>
+  <% } %>
+  <span class="survey-completes">?</span>/
+  <span class="survey-quota"><%= survey.Quota %></span>
+  <div class="progress-bar">
+    <div class="progress" style="width: <%= (survey.Completes || Math.random() * survey.Quota * 100) / survey.Quota %>%"></div>
+  </div>
+</span>

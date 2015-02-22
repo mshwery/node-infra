@@ -1,0 +1,46 @@
+.surveys {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.survey {
+  @extends $clearfix;
+  background: #fff;
+  padding: 1em;
+  box-shadow: 0 1px 0px rgba(0,0,0,0.12);
+  margin-top: 2em;
+}
+
+.survey-name {
+  float: left;
+  margin: 0;
+  font-weight: 500;
+  font-size: 1em;
+  max-width: 80%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: $link-color;
+}
+
+.survey-completion {
+  float: right;
+  text-align: center;
+  color: $secondary-text-color;
+
+  .progress {
+    background: $link-color;
+  }
+}
+
+.survey-completes {
+  color: $link-color;
+}
+
+.survey-section-label {
+  display: block;
+  text-transform: uppercase;
+  font-size: 10px;
+  color: $tertiary-text-color;
+}

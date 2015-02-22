@@ -1,0 +1,7 @@
+<ul class="surveys">
+  <% surveys.forEach(function(survey) { %>
+    <li class="survey">
+      <%- include('_survey', { survey: survey }); %>
+    </li>
+  <% }); %>
+</ul>

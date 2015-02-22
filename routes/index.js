@@ -1,9 +1,8 @@
-var express = require('express');
-var router = express.Router();
+var routes = require('node-require-directory')(__dirname);
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
-
-module.exports = router;
+module.exports = function(app) {
+  Object.keys(routes).forEach(function(key) {
+    if (key === 'index') return;
+    app.use('/' + key, routes[key]);
+  });
+};
